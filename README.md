@@ -3,7 +3,7 @@ https://www.turkiye.gov.tr/imei-sorgulama üzerinden Java ile imei sorgulama.
 
 <br>
 ## Nasıl Çalışıyor?
-HttpClient ve Jsoup kullanılarak siteye istek gönderiliyor ve gelen cevaptan HTML kırpılıp istenilen kısım alınıyor.
+HttpClient kullanılarak siteye istek gönderiliyor ve Jsoup ile gelen cevaptan HTML kırpılıp istenilen kısım alınıyor.
 Browser'dan siteye girip sorgulama yapıyormuşsun gibi fakat captcha ile uğraşmıyorsun.
 
 ```java
