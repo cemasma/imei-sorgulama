@@ -1,55 +1,57 @@
 package com.github.cemasma;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.ClassicHttpRequest;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.message.BasicNameValuePair;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Client {
-	
 	private final String URL = "https://www.turkiye.gov.tr/imei-sorgulama";
-	private HttpClient httpClient;
+	private final HttpClient httpClient;
 	
 	public Client() {
-		httpClient = HttpClientBuilder.create().build();
+		httpClient = HttpClients.createDefault();
 	}
 	
-	public String connect() {
-		HttpGet getRequest = new HttpGet(this.URL);
+	public String query(String imei) {
+		AtomicReference<String> result = new AtomicReference<>("Query is failed.");
+
+		ClassicHttpRequest mainPageRequest = ClassicRequestBuilder.get(URL).build();
+
+
 		try {
-			HttpResponse httpResponse = httpClient.execute(getRequest);
-			return Util.httpResponseContentToString(httpResponse);
+			httpClient.execute(mainPageRequest, response -> {
+				String content = EntityUtils.toString(response.getEntity());
+
+				String token = Util.getTokenInHTML(content);
+
+				ClassicHttpRequest submitRequest = ClassicRequestBuilder.post(URL + "?submit")
+						.setEntity(new UrlEncodedFormEntity(Arrays.asList(
+								new BasicNameValuePair("txtImei", imei),
+								new BasicNameValuePair("token", token))))
+						.build();
+				httpClient.execute(submitRequest, classicHttpResponse -> null);
+
+				HttpGet queryRequest = new HttpGet(URL + "?asama=1");
+				httpClient.execute(queryRequest, classicHttpResponse -> {
+					result.set(Util.getImeiInformationInHTML(EntityUtils.toString(classicHttpResponse.getEntity())));
+					return null;
+				});
+
+				return null;
+			});
 		} catch (IOException e) {
 			e.printStackTrace();
-			return e.getMessage();
 		}
+
+		return result.get();
 	}
-	
-	public String submitQuery(String imei, String token) {
-		HttpPost postRequest = new HttpPost(URL + "?submit");
-		List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
-		urlParameters.add((NameValuePair) new BasicNameValuePair("txtImei", imei));
-		urlParameters.add((NameValuePair) new BasicNameValuePair("token", token));
-		
-		
-		
-		try {
-			postRequest.setEntity(new UrlEncodedFormEntity((List<? extends NameValuePair>) urlParameters));
-			
-			HttpResponse httpResponse = httpClient.execute(postRequest);
-			return Util.httpResponseContentToString(httpResponse);
-		} catch (IOException e) {
-			e.printStackTrace();
-			return e.getMessage();
-		}	
-	}
-	
 }

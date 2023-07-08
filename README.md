@@ -1,25 +1,28 @@
 # imei-sorgulama
 https://www.turkiye.gov.tr/imei-sorgulama üzerinden Java ile imei sorgulama.
 
-<br>
-
 ## Nasıl Çalışıyor?
-HttpClient kullanılarak siteye istek gönderiliyor ve Jsoup ile gelen cevaptan HTML kırpılıp istenilen kısım alınıyor.
-Browser'dan siteye girip sorgulama yapıyormuşsun gibi fakat captcha ile uğraşmıyorsun.
+HttpClient kullanılarak programatik olarak siteye istek gönderiliyor ve Jsoup ile gelen cevaptan HTML kırpılıp istenilen kısım alınıyor.
 
+### Build
+```
+mvn clean install && mvn package
+```
+
+### Run
+```
+mvn exec:java -Dexec.mainClass=com.github.cemasma.Main -Dexec.args="111111111111111"
+```
+
+### Demo
 ```java
+String imei = "111111111111111";
+if (args.length > 0 && args[0].length() == 15) {
+    imei = args[0];
+}
+
 Client client = new Client();
-String sourceHTML = client.connect();
-
-String token = Util.getTokenInHTML(sourceHTML);
-
-sourceHTML = client.submitQuery("111111111111111", token);
-String result = Util.getImeiInformationInHTML(sourceHTML);
+System.out.println(client.query(imei));
 ```
 
 Burada result değişkeninin içeriği, sorgulanan imei numarasının durumu kayıtlı ise "IMEI NUMARASI KAYITLI" değil ise "KAYIT BULUNAMADI" oluyor.
-
-<br>
-
-## Captcha vardı ona ne oldu?
-Site üzerinden sorgulama yaparken girilen captcha bilgisi de sorgulama adresine gönderiliyor fakat burada biz göndermiyoruz. Demek ki captcha doğrulamasını atlatabilmemizin nedeni yüksek ihtimal ile captcha kontrolünün ön yüzde yapılması. 
